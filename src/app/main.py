@@ -2,8 +2,16 @@ import uvicorn
 from fastapi import FastAPI
 
 from app.core import settings
+from app.routers import employees_router
 
-app = FastAPI()
+app = FastAPI(prefix=settings.api.prefix)
+
+app.include_router(employees_router)
+
+
+@app.get("/health", include_in_schema=False)
+async def health():
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":

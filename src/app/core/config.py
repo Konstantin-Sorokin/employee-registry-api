@@ -21,7 +21,7 @@ class RunConfig(BaseModel):
 class ApiConfig(BaseModel):
     """Конфигурация API маршрутов."""
     prefix: str = "/api"
-    users_prefix: str = "/employees"
+    employees_prefix: str = "/employees"
 
 
 class DatabaseConfig(BaseModel):
