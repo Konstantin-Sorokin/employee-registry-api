@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import Date, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core import Base
+from app.models import Base
 from app.models.mixins import IdPkMixin
 
 
