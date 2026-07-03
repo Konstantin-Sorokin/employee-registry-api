@@ -12,7 +12,9 @@ class IdMixin(BaseModel):
 
 
 class NameStripMixin(BaseModel):
-    @field_validator("first_name", "last_name", "middle_name", mode="before")
+    @field_validator(
+        "first_name", "last_name", "middle_name", mode="before", check_fields=False
+    )
     @classmethod
     def strip_names(cls, v):
         if isinstance(v, str):
