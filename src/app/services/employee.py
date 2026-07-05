@@ -1,11 +1,12 @@
 from typing import Optional
-from fastapi import HTTPException
+
+from fastapi import HTTPException, UploadFile
 
 from app.repositories.employee import EmployeeRepository
+from app.schemas.employee import EmployeeCreate, EmployeeResponse, EmployeeUpdate
 from app.schemas.filters import EmployeeFilter
 from app.schemas.pagination import PaginationResponse
-from app.schemas.employee import EmployeeCreate, EmployeeUpdate, EmployeeResponse
-from app.utils.files import delete_photo
+from app.utils.files import delete_photo, process_and_save_photo
 
 
 class EmployeeService:
@@ -39,26 +40,42 @@ class EmployeeService:
         return EmployeeResponse.model_validate(employee)
 
     async def create_employee(
-        self, data: EmployeeCreate, photo_filename: Optional[str] = None
+        self, data: EmployeeCreate, photo: Optional[UploadFile] = None
     ) -> EmployeeResponse:
         employee_data = data.model_dump()
-        employee_data["photo_filename"] = photo_filename
+
+        # 📸 Обработка фото
+        photo_filename = None
+        if photo and photo.filename:
+            photo_filename = await process_and_save_photo(photo)
+            employee_data["photo_filename"] = photo_filename
 
         new_employee = await self.repo.create(employee_data)
         return EmployeeResponse.model_validate(new_employee)
 
     async def update_employee(
-        self, employee_id: int, data: EmployeeUpdate, photo_filename: Optional[str] = None
+        self, employee_id: int, data: EmployeeUpdate, photo: Optional[UploadFile] = None
     ) -> EmployeeResponse:
         employee = await self._get_employee_or_404(employee_id)
 
+        # Обработка фото
+        photo_filename = None
+        if photo and photo.filename:
+            print(f"📸 Сохраняем фото: {photo.filename}")
+            photo_filename = await process_and_save_photo(photo)
+            print(f"📸 Фото сохранено: {photo_filename}")
+
         update_data = data.model_dump(exclude_unset=True)
 
+        # Если есть новое фото
         if photo_filename:
+            # Удаляем старое фото
             if employee.photo_filename:
                 delete_photo(employee.photo_filename)
+                print(f"📸 Старое фото удалено: {employee.photo_filename}")
             update_data["photo_filename"] = photo_filename
 
+        # Обновляем остальные поля
         if update_data:
             updated_employee = await self.repo.update(employee, update_data)
             return EmployeeResponse.model_validate(updated_employee)

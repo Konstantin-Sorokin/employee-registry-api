@@ -11,6 +11,7 @@ RUN uv sync --frozen --no-dev
 COPY . .
 
 RUN groupadd -r appuser && useradd -r -g appuser appuser && \
+    mkdir -p /app/src/app/uploads/photos && \
     chown -R appuser:appuser /app
 
 USER appuser

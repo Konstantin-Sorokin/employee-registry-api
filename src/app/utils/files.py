@@ -3,10 +3,11 @@ from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
 
+from app.core.config import UPLOAD_DIR
+
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png"}
 SAFE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 MAX_FILE_SIZE = 200 * 1024
-UPLOAD_DIR = Path("uploads/photos")
 
 
 async def process_and_save_photo(photo: UploadFile) -> str:

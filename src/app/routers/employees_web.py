@@ -21,7 +21,6 @@ from app.dependencies.employees import get_employee_service
 from app.schemas.employee import EmployeeCreate, EmployeeUpdate
 from app.schemas.filters import EmployeeFilter
 from app.services.employee import EmployeeService
-from app.utils.files import process_and_save_photo
 from app.utils.phone import normalize_phone
 from app.utils.template_helpers import api_photo_url, format_phone_display, get_age
 
@@ -116,10 +115,8 @@ async def create_employee(
         phone=normalized_phone,
     )
 
-    photo_filename = (
-        await process_and_save_photo(photo) if photo and photo.filename else None
-    )
-    await service.create_employee(data=data, photo_filename=photo_filename)
+    # ✅ Убираем photo_filename, передаём photo
+    await service.create_employee(data=data, photo=photo)
 
     return RedirectResponse(url=settings.api.employees_prefix, status_code=303)
 
@@ -189,11 +186,9 @@ async def update_employee(
         phone=normalized_phone,
     )
 
-    photo_filename = (
-        await process_and_save_photo(photo) if photo and photo.filename else None
-    )
+    # ✅ Убираем photo_filename, передаём photo
     await service.update_employee(
-        employee_id=employee_id, data=data, photo_filename=photo_filename
+        employee_id=employee_id, data=data, photo=photo
     )
 
     return RedirectResponse(url=settings.api.employees_prefix, status_code=303)
