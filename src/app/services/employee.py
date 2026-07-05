@@ -1,11 +1,11 @@
 from typing import Optional
-from fastapi import UploadFile, HTTPException
+from fastapi import HTTPException
 
 from app.repositories.employee import EmployeeRepository
 from app.schemas.filters import EmployeeFilter
 from app.schemas.pagination import PaginationResponse
 from app.schemas.employee import EmployeeCreate, EmployeeUpdate, EmployeeResponse
-from app.utils.files import delete_photo, process_and_save_photo
+from app.utils.files import delete_photo
 
 
 class EmployeeService:
@@ -39,10 +39,8 @@ class EmployeeService:
         return EmployeeResponse.model_validate(employee)
 
     async def create_employee(
-        self, data: EmployeeCreate, photo: Optional[UploadFile] = None
+        self, data: EmployeeCreate, photo_filename: Optional[str] = None
     ) -> EmployeeResponse:
-        photo_filename = await process_and_save_photo(photo) if photo else None
-
         employee_data = data.model_dump()
         employee_data["photo_filename"] = photo_filename
 
@@ -50,16 +48,15 @@ class EmployeeService:
         return EmployeeResponse.model_validate(new_employee)
 
     async def update_employee(
-        self, employee_id: int, data: EmployeeUpdate, photo: Optional[UploadFile] = None
+        self, employee_id: int, data: EmployeeUpdate, photo_filename: Optional[str] = None
     ) -> EmployeeResponse:
         employee = await self._get_employee_or_404(employee_id)
 
         update_data = data.model_dump(exclude_unset=True)
 
-        if photo:
+        if photo_filename:
             if employee.photo_filename:
                 delete_photo(employee.photo_filename)
-            photo_filename = await process_and_save_photo(photo)
             update_data["photo_filename"] = photo_filename
 
         if update_data:
