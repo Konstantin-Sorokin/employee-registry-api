@@ -1,21 +1,27 @@
 services:
   api:
+    ports:
+      - "8000:8000"
     build:
       context: .
-      dockerfile: Dockerfile.prod
+      dockerfile: Dockerfile
     container_name: employees_api
-    restart: always
+    restart: unless-stopped
     env_file:
       - .env
     networks:
       - api_internal
     volumes:
-      - uploads_data:/app/src/app/uploads
+      - ./src:/app/src
+      - ./alembic:/app/alembic
     depends_on:
       pg:
         condition: service_healthy
-    environment:
-      - ENVIRONMENT=production
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   pg:
     image: postgres:16.4
@@ -36,8 +42,6 @@ services:
 
 volumes:
   pg_data:
-  uploads_data:
 
 networks:
   api_internal:
-    driver: bridge

@@ -27,11 +27,8 @@ from app.utils.template_helpers import api_photo_url, format_phone_display, get_
 
 router = APIRouter(prefix=settings.api.employees_prefix)
 
-# Инициализация шаблонов
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-
-# Добавляем функции в глобальную область видимости Jinja2
 templates.env.globals["get_age"] = get_age
 templates.env.globals["format_phone_display"] = format_phone_display
 templates.env.globals["api_photo_url"] = api_photo_url
@@ -120,9 +117,7 @@ async def create_employee(
     )
 
     photo_filename = (
-        await process_and_save_photo(photo)
-        if photo and photo.filename
-        else None
+        await process_and_save_photo(photo) if photo and photo.filename else None
     )
     await service.create_employee(data=data, photo_filename=photo_filename)
 
@@ -195,11 +190,11 @@ async def update_employee(
     )
 
     photo_filename = (
-        await process_and_save_photo(photo)
-        if photo and photo.filename
-        else None
+        await process_and_save_photo(photo) if photo and photo.filename else None
     )
-    await service.update_employee(employee_id=employee_id, data=data, photo_filename=photo_filename)
+    await service.update_employee(
+        employee_id=employee_id, data=data, photo_filename=photo_filename
+    )
 
     return RedirectResponse(url=settings.api.employees_prefix, status_code=303)
 
