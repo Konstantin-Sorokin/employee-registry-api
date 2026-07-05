@@ -1,0 +1,43 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: employees_api
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - api_internal
+    volumes:
+      - uploads_data:/app/src/app/uploads
+    depends_on:
+      pg:
+        condition: service_healthy
+    environment:
+      - ENVIRONMENT=production
+
+  pg:
+    image: postgres:16.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - api_internal
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-d", "postgres", "-U", "postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  pg_data:
+  uploads_data:
+
+networks:
+  api_internal:
+    driver: bridge

@@ -1,0 +1,40 @@
+# Environment and secrets
+.env
+.env.*
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+env/
+
+# Build and distribution artifacts
+*.egg-info/
+dist/
+build/
+*.egg
+*.whl
+
+# IDE, OS, and editor files
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Documentation, tests, CI, and version control
+tests/
+docs/
+.github/
+.git/
+.gitignore
+.gitattributes
+README.md
+LICENSE
+
+# Docker configuration files
+docker-compose*.yml
+Dockerfile*
+.dockerignore
