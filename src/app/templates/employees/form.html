@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+    <h1 class="text-2xl font-bold mb-6 text-gray-900">{{ form_title }}</h1>
+
+    {% if error %}
+    <div class="mb-4 p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form action="{{ form_action }}" method="post" enctype="multipart/form-data" class="space-y-6" id="employeeForm">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Фамилия *</label>
+                <input type="text" name="last_name" required value="{{ emp.last_name if emp else '' }}"
+                       class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Имя *</label>
+                <input type="text" name="first_name" required value="{{ emp.first_name if emp else '' }}"
+                       class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Отчество</label>
+            <input type="text" name="middle_name" value="{{ emp.middle_name if emp and emp.middle_name else '' }}"
+                   placeholder="Введите отчество"
+                   class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Дата рождения *</label>
+                <div class="relative">
+                    <input type="text"
+                           name="birth_date"
+                           id="birthDateInput"
+                           placeholder="ДД.ММ.ГГГГ"
+                           value="{% if emp and emp.birth_date %}{% if emp.birth_date is string %}{{ emp.birth_date }}{% else %}{{ emp.birth_date.strftime('%d.%m.%Y') }}{% endif %}{% endif %}"
+                           maxlength="10"
+                           class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border pr-10 font-mono">
+                    <button type="button"
+                            id="calendarToggle"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Введите дату вручную или выберите в календаре</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Пол *</label>
+                <select name="gender" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border bg-white">
+                    <option value="">Выберите...</option>
+                    <option value="Male" {% if emp and emp.gender == 'Male' %}selected{% endif %}>Мужской</option>
+                    <option value="Female" {% if emp and emp.gender == 'Female' %}selected{% endif %}>Женский</option>
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Телефон</label>
+            <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 font-medium select-none">+7</span>
+                <input type="tel"
+                       name="phone"
+                       id="phoneInput"
+                       value="{% if emp and emp.phone %}{% if emp.phone.startswith('7') %}{{ emp.phone[1:] }}{% else %}{{ emp.phone }}{% endif %}{% endif %}"
+                       placeholder="(000) 000-00-00"
+                       maxlength="15"
+                       class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border pl-12 font-mono text-base tracking-wide">
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Введите 10 цифр номера</p>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Фотография</label>
+            <input type="file" name="photo" accept="image/*"
+                   class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-lg cursor-pointer">
+
+            {% if emp and emp.photo_filename %}
+                <div class="mt-3 flex items-center gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <img src="{{ api_photo_url(emp.photo_filename) }}" alt="Текущее фото"
+                         class="h-16 w-16 rounded-lg object-cover border border-gray-200 shadow-sm">
+                    <div class="text-sm">
+                        <p class="font-medium text-gray-900">Текущая фотография:</p>
+                        <p class="text-gray-500 text-xs mt-1">{{ emp.photo_filename }}</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="flex items-center justify-end gap-4 pt-4 border-t border-gray-100">
+            <a href="/employees/" class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium">Отмена</a>
+            <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow-sm">Сохранить</button>
+        </div>
+    </form>
+</div>
+
+<!-- Подключаем Pikaday -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
+<script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // === PIKADAY - КАЛЕНДАРЬ ===
+    var picker = new Pikaday({
+        field: document.getElementById('birthDateInput'),
+        format: 'DD.MM.YYYY',
+        yearRange: [1900, new Date().getFullYear()],
+        firstDay: 1,
+        // Функция для правильного форматирования даты
+        toString: function(date, format) {
+            var day = String(date.getDate()).padStart(2, '0');
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            var year = date.getFullYear();
+            return day + '.' + month + '.' + year;
+        },
+        i18n: {
+            previousMonth: 'Предыдущий',
+            nextMonth: 'Следующий',
+            months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+            weekdays: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+            weekdaysShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+        },
+        onSelect: function(date) {
+            // Дата уже установлена в поле
+        }
+    });
+
+    // Открываем календарь по клику на иконку
+    document.getElementById('calendarToggle').addEventListener('click', function() {
+        picker.show();
+    });
+
+    // === МАСКА ДЛЯ ДАТЫ (ручной ввод) ===
+    const birthInput = document.getElementById('birthDateInput');
+
+    function formatDate(value) {
+        let digits = value.replace(/\D/g, '');
+        digits = digits.slice(0, 8);
+
+        let result = '';
+        if (digits.length > 0) {
+            result += digits.slice(0, Math.min(2, digits.length));
+            if (digits.length >= 3) {
+                result += '.';
+                result += digits.slice(2, Math.min(4, digits.length));
+                if (digits.length >= 5) {
+                    result += '.';
+                    result += digits.slice(4, 8);
+                }
+            }
+        }
+        return result;
+    }
+
+    // Обработчик ввода даты вручную
+    birthInput.addEventListener('input', function(e) {
+        // Проверяем, не вызвано ли изменение Pikaday (чтобы не конфликтовать)
+        if (this.dataset.pikadayChange) {
+            this.dataset.pikadayChange = false;
+            return;
+        }
+
+        const oldValue = this.value;
+        const caretPos = this.selectionStart;
+
+        let digits = this.value.replace(/\D/g, '');
+        digits = digits.slice(0, 8);
+
+        const newValue = formatDate(digits);
+
+        if (oldValue !== newValue) {
+            this.value = newValue;
+            // Ставим курсор в конец
+            this.setSelectionRange(newValue.length, newValue.length);
+        }
+    });
+
+    // Обработчик нажатия клавиш для даты (только цифры)
+    birthInput.addEventListener('keydown', function(e) {
+        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+                             'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                             'Home', 'End', 'Shift', 'Control', 'Alt', 'Meta'];
+        if (allowedKeys.includes(e.key)) {
+            return;
+        }
+        if (e.key >= '0' && e.key <= '9') {
+            return;
+        }
+        if (e.ctrlKey && ['c', 'v', 'x', 'a'].includes(e.key.toLowerCase())) {
+            return;
+        }
+        e.preventDefault();
+    });
+
+    // Обработка вставки для даты
+    birthInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        let digits = pastedText.replace(/\D/g, '');
+        digits = digits.slice(0, 8);
+        const formatted = formatDate(digits);
+        this.value = formatted;
+        this.setSelectionRange(formatted.length, formatted.length);
+    });
+
+    // Обертка для Pikaday, чтобы не конфликтовать с ручным вводом
+    const originalSetValue = picker.setDate;
+    picker.setDate = function(date, preventOnSelect) {
+        // Отмечаем, что изменение вызвано Pikaday
+        birthInput.dataset.pikadayChange = true;
+        originalSetValue.call(this, date, preventOnSelect);
+    };
+
+    // === ТЕЛЕФОН ===
+    const phoneInput = document.getElementById('phoneInput');
+    const form = document.getElementById('employeeForm');
+
+    function getDigits(str) {
+        return str.replace(/\D/g, '');
+    }
+
+    function formatPhone(value) {
+        let digits = getDigits(value);
+        digits = digits.slice(0, 10);
+
+        let result = '';
+        if (digits.length > 0) {
+            result += '(';
+            result += digits.slice(0, Math.min(3, digits.length));
+            if (digits.length > 3) {
+                result += ') ';
+                result += digits.slice(3, Math.min(6, digits.length));
+                if (digits.length > 6) {
+                    result += '-';
+                    result += digits.slice(6, Math.min(8, digits.length));
+                    if (digits.length > 8) {
+                        result += '-';
+                        result += digits.slice(8, 10);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    function getNewCaretPosition(oldValue, newValue, oldCaretPos) {
+        let digitCount = 0;
+        for (let i = 0; i < oldCaretPos && i < oldValue.length; i++) {
+            if (oldValue[i] >= '0' && oldValue[i] <= '9') {
+                digitCount++;
+            }
+        }
+
+        if (oldValue.length > newValue.length) {
+            let pos = 0;
+            let currentDigitCount = 0;
+            for (let i = 0; i < newValue.length; i++) {
+                if (newValue[i] >= '0' && newValue[i] <= '9') {
+                    currentDigitCount++;
+                    if (currentDigitCount === digitCount) {
+                        pos = i + 1;
+                        break;
+                    }
+                }
+            }
+            if (pos === 0 && digitCount === 0) {
+                for (let i = 0; i < newValue.length; i++) {
+                    if (newValue[i] === '(' || newValue[i] === ')' || newValue[i] === ' ' || newValue[i] === '-') {
+                        pos = i + 1;
+                        break;
+                    }
+                }
+            }
+            return pos || newValue.length;
+        }
+
+        let pos = 0;
+        let currentDigitCount = 0;
+        for (let i = 0; i < newValue.length; i++) {
+            if (newValue[i] >= '0' && newValue[i] <= '9') {
+                currentDigitCount++;
+                if (currentDigitCount === digitCount) {
+                    pos = i + 1;
+                    break;
+                }
+            }
+        }
+
+        if (pos === 0) {
+            pos = newValue.length;
+        }
+
+        return pos;
+    }
+
+    phoneInput.addEventListener('input', function(e) {
+        const oldValue = this.value;
+        const caretPos = this.selectionStart;
+
+        let digits = getDigits(this.value);
+        digits = digits.slice(0, 10);
+
+        const newValue = formatPhone(digits);
+
+        if (oldValue !== newValue) {
+            const newPos = getNewCaretPosition(oldValue, newValue, caretPos);
+            this.value = newValue;
+            try {
+                this.setSelectionRange(newPos, newPos);
+            } catch (e) {
+                this.setSelectionRange(newValue.length, newValue.length);
+            }
+        }
+    });
+
+    phoneInput.addEventListener('keydown', function(e) {
+        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+                             'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                             'Home', 'End', 'Shift', 'Control', 'Alt', 'Meta'];
+        if (allowedKeys.includes(e.key)) {
+            return;
+        }
+        if (e.key >= '0' && e.key <= '9') {
+            return;
+        }
+        if (e.ctrlKey && ['c', 'v', 'x', 'a'].includes(e.key.toLowerCase())) {
+            return;
+        }
+        e.preventDefault();
+    });
+
+    phoneInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        let digits = getDigits(pastedText);
+        digits = digits.slice(0, 10);
+        const formatted = formatPhone(digits);
+        this.value = formatted;
+        this.setSelectionRange(formatted.length, formatted.length);
+    });
+
+    form.addEventListener('submit', function(e) {
+        // Очищаем телефон
+        if (phoneInput.value) {
+            let cleanPhone = phoneInput.value.replace(/\D/g, '');
+            cleanPhone = cleanPhone.slice(0, 10);
+            phoneInput.value = cleanPhone;
+        }
+
+        // Преобразуем дату в формат YYYY-MM-DD для бэкенда
+        if (birthInput.value) {
+            let parts = birthInput.value.split('.');
+            if (parts.length === 3) {
+                let day = parts[0].padStart(2, '0');
+                let month = parts[1].padStart(2, '0');
+                let year = parts[2];
+                if (year.length === 4) {
+                    birthInput.value = `${year}-${month}-${day}`;
+                }
+            }
+        }
+
+        return true;
+    });
+});
+</script>
+
+<style>
+#phoneInput {
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+}
+
+#phoneInput::placeholder {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: 0;
+    color: #9ca3af;
+}
+
+.relative span {
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+}
+
+#birthDateInput {
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    cursor: text;
+}
+
+/* Стили для Pikaday на русском */
+.pika-single {
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.pika-single .pika-button {
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.pika-single .pika-button:hover {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.pika-single .is-today .pika-button {
+    background: #eff6ff;
+    font-weight: bold;
+}
+
+.pika-single .is-selected .pika-button {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.pika-single .pika-table th {
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 12px;
+}
+</style>
+
+{% endblock %}

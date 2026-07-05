@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if phone_error %}
+<div class="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">
+    {{ phone_error }}
+</div>
+{% endif %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Реестр сотрудников</h1>
+    <a href="/employees/create" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition shadow-sm">
+        + Добавить сотрудника
+    </a>
+</div>
+
+<form method="get" action="/employees/" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-wrap gap-4 items-end" id="searchForm">
+    <div class="flex-1 min-w-[200px]">
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Поиск по ФИО</label>
+        <input type="text" name="search" value="{{ filters.search or '' }}"
+               class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border">
+    </div>
+
+    <div class="flex-1 min-w-[150px]">
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Телефон</label>
+        <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 font-medium select-none text-sm">+7</span>
+            <input type="tel"
+                   name="phone"
+                   id="searchPhoneInput"
+                   value="{{ filters.phone or '' }}"
+                   placeholder="(000) 000-00-00"
+                   maxlength="15"
+                   class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border pl-12 font-mono text-sm tracking-wide{% if phone_error %} border-red-400 focus:border-red-500 focus:ring-red-500{% endif %}">
+        </div>
+    </div>
+
+    <div class="flex-1 min-w-[120px]">
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Пол</label>
+        <select name="gender" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border bg-white">
+            <option value="">Все</option>
+            <option value="Male" {% if filters.gender == 'Male' %}selected{% endif %}>Мужской</option>
+            <option value="Female" {% if filters.gender == 'Female' %}selected{% endif %}>Женский</option>
+        </select>
+    </div>
+
+    <div class="w-24">
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Возраст от</label>
+        <input type="number" name="age_from" value="{{ filters.age_from or '' }}" min="0" max="150"
+               class="w-full border-gray-300 rounded-lg shadow-sm p-2.5 border">
+    </div>
+
+    <div class="w-24">
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Возраст до</label>
+        <input type="number" name="age_to" value="{{ filters.age_to or '' }}" min="0" max="150"
+               class="w-full border-gray-300 rounded-lg shadow-sm p-2.5 border">
+    </div>
+
+    <div class="flex gap-2">
+        <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-2.5 rounded-lg transition font-medium">Найти</button>
+        <a href="/employees/" class="px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-gray-700 font-medium">Сброс</a>
+    </div>
+</form>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible">
+    <table class="min-w-full divide-y divide-gray-200" style="overflow: visible !important;">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Фото</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ФИО</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Дата рождения</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Пол</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Телефон</th>
+                <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Действия</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 bg-white" style="overflow: visible !important;">
+            {% for emp in employees %}
+            <tr class="hover:bg-blue-50 transition duration-150 employee-row" style="overflow: visible !important;">
+                <td class="px-6 py-4 whitespace-nowrap photo-cell" style="overflow: visible !important; position: relative;">
+                    <div class="photo-wrapper">
+                        {% if emp.photo_filename %}
+                            <img class="h-10 w-10 rounded-full object-cover photo-thumbnail"
+                                 src="{{ api_photo_url(emp.photo_filename) }}"
+                                 alt="Фото {{ emp.last_name }}">
+                        {% else %}
+                            <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs font-bold border border-gray-200">Н/Д</div>
+                        {% endif %}
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="font-semibold text-gray-900">{{ emp.last_name }} {{ emp.first_name }}</div>
+                    <div class="text-sm text-gray-500">{{ emp.middle_name or '' }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                    {{ emp.birth_date.strftime('%d.%m.%Y') }}
+                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full ml-2">{{ get_age(emp.birth_date) }} лет</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    {% if emp.gender == 'Male' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                            </svg>
+                            Мужской
+                        </span>
+                    {% elif emp.gender == 'Female' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-800">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                            </svg>
+                            Женский
+                        </span>
+                    {% else %}
+                        <span class="text-gray-400 text-xs">—</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-mono text-sm">{{ format_phone_display(emp.phone) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-3">
+                    <a href="/employees/{{ emp.id }}/edit" class="text-yellow-600 hover:text-yellow-900 font-medium">✏️ Изменить</a>
+
+                    <form action="/employees/{{ emp.id }}/delete" method="post" class="inline" onsubmit="return confirm('Удалить сотрудника?')">
+                        <button type="submit" class="text-red-600 hover:text-red-900 font-medium bg-transparent border-none cursor-pointer">🗑 Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="px-6 py-12 text-center text-gray-400 italic">Сотрудники не найдены</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pages > 1 %}
+<div class="flex justify-center items-center gap-4 mt-6">
+    {% if page > 1 %}
+        <a href="/employees/?page={{ page - 1 }}&{{ query_params }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-white hover:shadow-sm transition bg-gray-50 text-gray-700">← Назад</a>
+    {% endif %}
+    <span class="text-gray-600 font-medium">Страница {{ page }} из {{ pages }}</span>
+    {% if page < pages %}
+        <a href="/employees/?page={{ page + 1 }}&{{ query_params }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-white hover:shadow-sm transition bg-gray-50 text-gray-700">Вперед →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('searchForm');
+    const phoneInput = document.getElementById('searchPhoneInput');
+
+    function getDigits(str) {
+        return str.replace(/\D/g, '');
+    }
+
+    function formatPhone(value) {
+        let digits = getDigits(value);
+        digits = digits.slice(0, 10);
+
+        let result = '';
+        if (digits.length > 0) {
+            result += '(';
+            result += digits.slice(0, Math.min(3, digits.length));
+            if (digits.length > 3) {
+                result += ') ';
+                result += digits.slice(3, Math.min(6, digits.length));
+                if (digits.length > 6) {
+                    result += '-';
+                    result += digits.slice(6, Math.min(8, digits.length));
+                    if (digits.length > 8) {
+                        result += '-';
+                        result += digits.slice(8, 10);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    // 🔥 Функция для форматирования телефона при загрузке страницы
+    function initPhoneFormat() {
+        if (phoneInput.value) {
+            let digits = getDigits(phoneInput.value);
+            // Если пришло 11 цифр с 7 в начале - убираем 7 для отображения
+            if (digits.length === 11 && digits.startsWith('7')) {
+                digits = digits.slice(1);
+            }
+            // Если пришло 10 цифр без 7 - оставляем как есть
+            const formatted = formatPhone(digits);
+            if (formatted !== phoneInput.value) {
+                phoneInput.value = formatted;
+            }
+        }
+    }
+
+    // Инициализация при загрузке
+    initPhoneFormat();
+
+    function getNewCaretPosition(oldValue, newValue, oldCaretPos) {
+        let digitCount = 0;
+        for (let i = 0; i < oldCaretPos && i < oldValue.length; i++) {
+            if (oldValue[i] >= '0' && oldValue[i] <= '9') {
+                digitCount++;
+            }
+        }
+
+        if (oldValue.length > newValue.length) {
+            let pos = 0;
+            let currentDigitCount = 0;
+            for (let i = 0; i < newValue.length; i++) {
+                if (newValue[i] >= '0' && newValue[i] <= '9') {
+                    currentDigitCount++;
+                    if (currentDigitCount === digitCount) {
+                        pos = i + 1;
+                        break;
+                    }
+                }
+            }
+            if (pos === 0 && digitCount === 0) {
+                for (let i = 0; i < newValue.length; i++) {
+                    if (newValue[i] === '(' || newValue[i] === ')' || newValue[i] === ' ' || newValue[i] === '-') {
+                        pos = i + 1;
+                        break;
+                    }
+                }
+            }
+            return pos || newValue.length;
+        }
+
+        let pos = 0;
+        let currentDigitCount = 0;
+        for (let i = 0; i < newValue.length; i++) {
+            if (newValue[i] >= '0' && newValue[i] <= '9') {
+                currentDigitCount++;
+                if (currentDigitCount === digitCount) {
+                    pos = i + 1;
+                    break;
+                }
+            }
+        }
+
+        if (pos === 0) {
+            pos = newValue.length;
+        }
+
+        return pos;
+    }
+
+    phoneInput.addEventListener('input', function(e) {
+        const oldValue = this.value;
+        const caretPos = this.selectionStart;
+
+        let digits = getDigits(this.value);
+        digits = digits.slice(0, 10);
+
+        const newValue = formatPhone(digits);
+
+        if (oldValue !== newValue) {
+            const newPos = getNewCaretPosition(oldValue, newValue, caretPos);
+            this.value = newValue;
+            try {
+                this.setSelectionRange(newPos, newPos);
+            } catch (e) {
+                this.setSelectionRange(newValue.length, newValue.length);
+            }
+        }
+    });
+
+    phoneInput.addEventListener('keydown', function(e) {
+        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+                             'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                             'Home', 'End', 'Shift', 'Control', 'Alt', 'Meta'];
+        if (allowedKeys.includes(e.key)) {
+            return;
+        }
+        if (e.key >= '0' && e.key <= '9') {
+            return;
+        }
+        if (e.ctrlKey && ['c', 'v', 'x', 'a'].includes(e.key.toLowerCase())) {
+            return;
+        }
+        e.preventDefault();
+    });
+
+    phoneInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        let digits = getDigits(pastedText);
+        digits = digits.slice(0, 10);
+        const formatted = formatPhone(digits);
+        this.value = formatted;
+        this.setSelectionRange(formatted.length, formatted.length);
+    });
+
+    form.addEventListener('submit', function(e) {
+        // Очищаем телефон для отправки
+        if (phoneInput.value) {
+            let cleanPhone = phoneInput.value.replace(/\D/g, '');
+            // Если 10 цифр - добавляем 7 для поиска в БД
+            if (cleanPhone.length === 10) {
+                cleanPhone = '7' + cleanPhone;
+            }
+            phoneInput.value = cleanPhone;
+        }
+
+        // Удаляем пустые поля
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.value === null || input.value.trim() === '') {
+                input.disabled = true;
+            }
+        });
+        return true;
+    });
+});
+</script>
+
+<style>
+/* Глобальные стили для переопределения overflow */
+.bg-white.rounded-xl.shadow-sm.border.border-gray-200 {
+    overflow: visible !important;
+}
+
+table,
+table * {
+    overflow: visible !important;
+}
+
+tbody,
+tbody tr,
+tbody tr td {
+    overflow: visible !important;
+}
+
+/* Контейнер для фото */
+.photo-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+}
+
+/* Увеличение фото при наведении */
+.photo-thumbnail {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    background: transparent !important;
+    border: none !important;
+    position: relative;
+}
+
+.photo-thumbnail:hover {
+    transform: scale(10) translateZ(0);
+    z-index: 999999 !important;
+    border-radius: 4px;
+    background: transparent !important;
+    border: none !important;
+    position: relative;
+}
+
+.photo-cell {
+    overflow: visible !important;
+    position: relative !important;
+}
+
+.employee-row:hover .photo-cell {
+    z-index: 99999 !important;
+}
+
+/* Стили для бейджей пола */
+.bg-blue-100 {
+    background-color: #dbeafe !important;
+}
+
+.text-blue-800 {
+    color: #1e40af !important;
+}
+
+.bg-pink-100 {
+    background-color: #fce7f3 !important;
+}
+
+.text-pink-800 {
+    color: #9d174d !important;
+}
+
+/* Стили для поля телефона в поиске */
+#searchPhoneInput {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+#searchPhoneInput::placeholder {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: 0;
+}
+
+.relative span {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+}
+</style>
+
+{% endblock %}
