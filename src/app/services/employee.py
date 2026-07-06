@@ -44,7 +44,6 @@ class EmployeeService:
     ) -> EmployeeResponse:
         employee_data = data.model_dump()
 
-        # 📸 Обработка фото
         photo_filename = None
         if photo and photo.filename:
             photo_filename = await process_and_save_photo(photo)
@@ -58,24 +57,17 @@ class EmployeeService:
     ) -> EmployeeResponse:
         employee = await self._get_employee_or_404(employee_id)
 
-        # Обработка фото
         photo_filename = None
         if photo and photo.filename:
-            print(f"📸 Сохраняем фото: {photo.filename}")
             photo_filename = await process_and_save_photo(photo)
-            print(f"📸 Фото сохранено: {photo_filename}")
 
         update_data = data.model_dump(exclude_unset=True)
 
-        # Если есть новое фото
         if photo_filename:
-            # Удаляем старое фото
             if employee.photo_filename:
                 delete_photo(employee.photo_filename)
-                print(f"📸 Старое фото удалено: {employee.photo_filename}")
             update_data["photo_filename"] = photo_filename
 
-        # Обновляем остальные поля
         if update_data:
             updated_employee = await self.repo.update(employee, update_data)
             return EmployeeResponse.model_validate(updated_employee)

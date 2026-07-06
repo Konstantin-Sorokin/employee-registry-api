@@ -115,8 +115,27 @@ async def create_employee(
         phone=normalized_phone,
     )
 
-    # ✅ Убираем photo_filename, передаём photo
-    await service.create_employee(data=data, photo=photo)
+    try:
+        await service.create_employee(data=data, photo=photo)
+    except HTTPException as e:
+        return templates.TemplateResponse(
+            request,
+            "employees/form.html",
+            {
+                "form_title": "Добавить сотрудника",
+                "form_action": "/employees/create",
+                "emp": {
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "middle_name": middle_name,
+                    "birth_date": birth_date,
+                    "gender": gender,
+                    "phone": phone,
+                },
+                "error": e.detail,
+            },
+            status_code=e.status_code,
+        )
 
     return RedirectResponse(url=settings.api.employees_prefix, status_code=303)
 
@@ -161,7 +180,6 @@ async def update_employee(
     except HTTPException:
         raise HTTPException(status_code=404, detail="Сотрудник не найден")
 
-    # Нормализуем телефон
     try:
         normalized_phone = normalize_phone(phone)
     except ValueError as e:
@@ -186,10 +204,21 @@ async def update_employee(
         phone=normalized_phone,
     )
 
-    # ✅ Убираем photo_filename, передаём photo
-    await service.update_employee(
-        employee_id=employee_id, data=data, photo=photo
-    )
+    try:
+        # ✅ Исправлено: добавил employee_id
+        await service.update_employee(employee_id=employee_id, data=data, photo=photo)
+    except HTTPException as e:
+        return templates.TemplateResponse(
+            request,
+            "employees/form.html",
+            {
+                "form_title": "Редактировать сотрудника",
+                "form_action": f"/employees/{employee_id}",
+                "emp": current_emp,
+                "error": e.detail,
+            },
+            status_code=e.status_code,
+        )
 
     return RedirectResponse(url=settings.api.employees_prefix, status_code=303)
 
