@@ -14,6 +14,7 @@ app.include_router(employees_web_router)
 
 @app.get("/health", include_in_schema=False)
 async def health():
+    """Проверка работоспособности сервиса (health check)."""
     return {"status": "ok"}
 
 

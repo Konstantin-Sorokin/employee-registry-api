@@ -40,6 +40,20 @@ async def list_page(
     service: Annotated[EmployeeService, Depends(get_employee_service)],
     page: int = Query(1, ge=1),
 ):
+    """Отображает страницу со списком сотрудников.
+
+    Поддерживает фильтрацию, поиск и пагинацию.
+    При поиске по телефону нормализует номер перед запросом.
+
+    Args:
+        request: Объект HTTP-запроса FastAPI.
+        filters: Параметры фильтрации (search, phone, gender, age_from, age_to).
+        service: Экземпляр EmployeeService для бизнес-логики.
+        page: Номер страницы (начиная с 1).
+
+    Returns:
+        TemplateResponse: HTML-страница со списком сотрудников.
+    """
     phone_error = None
     if filters.phone:
         try:
@@ -68,6 +82,14 @@ async def list_page(
 
 @router.get("/create")
 async def create_page(request: Request):
+    """Отображает форму для добавления нового сотрудника.
+
+    Args:
+        request: Объект HTTP-запроса FastAPI.
+
+    Returns:
+        TemplateResponse: HTML-страница с формой создания.
+    """
     return templates.TemplateResponse(
         request,
         "employees/form.html",
@@ -91,6 +113,26 @@ async def create_employee(
     phone: Optional[str] = Form(None),
     photo: Optional[UploadFile] = File(None),
 ):
+    """Обрабатывает отправку формы создания сотрудника.
+
+    Нормализует телефон, валидирует данные, создаёт запись в БД
+    и сохраняет загруженную фотографию.
+
+    Args:
+        request: Объект HTTP-запроса FastAPI.
+        service: Экземпляр EmployeeService.
+        first_name: Имя сотрудника.
+        last_name: Фамилия сотрудника.
+        middle_name: Отчество (опционально).
+        birth_date: Дата рождения в формате ISO (YYYY-MM-DD).
+        gender: Пол ("Male" или "Female").
+        phone: Номер телефона (опционально).
+        photo: Загружаемый файл фотографии (опционально).
+
+    Returns:
+        RedirectResponse: Редирект на список сотрудников при успехе.
+        TemplateResponse: Форма с ошибкой при неудаче.
+    """
     try:
         normalized_phone = normalize_phone(phone)
     except ValueError as e:
@@ -146,6 +188,19 @@ async def edit_page(
     employee_id: int,
     service: Annotated[EmployeeService, Depends(get_employee_service)],
 ):
+    """Отображает форму редактирования сотрудника.
+
+    Args:
+        request: Объект HTTP-запроса FastAPI.
+        employee_id: Идентификатор сотрудника.
+        service: Экземпляр EmployeeService.
+
+    Returns:
+        TemplateResponse: HTML-страница с формой редактирования.
+
+    Raises:
+        HTTPException: 404, если сотрудник не найден.
+    """
     try:
         emp = await service.get_employee_by_id(employee_id)
     except HTTPException:
@@ -175,6 +230,30 @@ async def update_employee(
     phone: Optional[str] = Form(None),
     photo: Optional[UploadFile] = File(None),
 ):
+    """Обрабатывает обновление данных сотрудника.
+
+    Нормализует телефон, валидирует данные и обновляет запись в БД.
+    При загрузке нового фото удаляет старое.
+
+    Args:
+        request: Объект HTTP-запроса FastAPI.
+        employee_id: Идентификатор сотрудника.
+        service: Экземпляр EmployeeService.
+        first_name: Имя сотрудника.
+        last_name: Фамилия сотрудника.
+        middle_name: Отчество (опционально).
+        birth_date: Дата рождения в формате ISO (YYYY-MM-DD).
+        gender: Пол ("Male" или "Female").
+        phone: Номер телефона (опционально).
+        photo: Загружаемый файл фотографии (опционально).
+
+    Returns:
+        RedirectResponse: Редирект на список сотрудников при успехе.
+        TemplateResponse: Форма с ошибкой при неудаче.
+
+    Raises:
+        HTTPException: 404, если сотрудник не найден.
+    """
     try:
         current_emp = await service.get_employee_by_id(employee_id)
     except HTTPException:
@@ -205,7 +284,6 @@ async def update_employee(
     )
 
     try:
-        # ✅ Исправлено: добавил employee_id
         await service.update_employee(employee_id=employee_id, data=data, photo=photo)
     except HTTPException as e:
         return templates.TemplateResponse(
@@ -228,6 +306,18 @@ async def delete_employee(
     employee_id: int,
     service: Annotated[EmployeeService, Depends(get_employee_service)],
 ):
+    """Удаляет сотрудника и его фотографию (если есть).
+
+    Args:
+        employee_id: Идентификатор сотрудника.
+        service: Экземпляр EmployeeService.
+
+    Returns:
+        RedirectResponse: Редирект на список сотрудников.
+
+    Raises:
+        HTTPException: 404, если сотрудник не найден.
+    """
     try:
         await service.delete_employee(employee_id)
     except HTTPException:

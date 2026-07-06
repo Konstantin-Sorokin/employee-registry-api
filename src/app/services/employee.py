@@ -14,6 +14,17 @@ class EmployeeService:
         self.repo = repo
 
     async def _get_employee_or_404(self, employee_id: int):
+        """Получает сотрудника по ID или выбрасывает 404.
+
+        Args:
+            employee_id: Идентификатор сотрудника.
+
+        Returns:
+            Employee: Объект модели сотрудника.
+
+        Raises:
+            HTTPException: 404, если сотрудник не найден.
+        """
         employee = await self.repo.get_by_id(employee_id)
         if not employee:
             raise HTTPException(status_code=404, detail="Сотрудник не найден")
@@ -22,6 +33,16 @@ class EmployeeService:
     async def get_employees(
         self, filters: EmployeeFilter, page: int = 1, limit: int = 10
     ) -> PaginationResponse[EmployeeResponse]:
+        """Получает список сотрудников с фильтрацией и пагинацией.
+
+        Args:
+            filters: Критерии фильтрации (поиск, телефон, пол, возраст).
+            page: Номер страницы (начиная с 1, по умолчанию 1).
+            limit: Количество записей на странице (по умолчанию 10).
+
+        Returns:
+            PaginationResponse[EmployeeResponse]: Результаты с метаданными пагинации.
+        """
         skip = (page - 1) * limit
         employees = await self.repo.get_filtered_employees(
             filters=filters, skip=skip, limit=limit
@@ -36,12 +57,24 @@ class EmployeeService:
         )
 
     async def get_employee_by_id(self, employee_id: int) -> EmployeeResponse:
+        """Получает данные сотрудника по ID."""
         employee = await self._get_employee_or_404(employee_id)
         return EmployeeResponse.model_validate(employee)
 
     async def create_employee(
         self, data: EmployeeCreate, photo: Optional[UploadFile] = None
     ) -> EmployeeResponse:
+        """Создаёт нового сотрудника.
+
+        При наличии фотографии обрабатывает и сохраняет её.
+
+        Args:
+            data: Данные нового сотрудника.
+            photo: Файл фотографии (опционально).
+
+        Returns:
+            EmployeeResponse: Созданный сотрудник.
+        """
         employee_data = data.model_dump()
 
         photo_filename = None
@@ -55,6 +88,18 @@ class EmployeeService:
     async def update_employee(
         self, employee_id: int, data: EmployeeUpdate, photo: Optional[UploadFile] = None
     ) -> EmployeeResponse:
+        """Обновляет данные сотрудника.
+
+        При загрузке новой фотографии удаляет старую.
+
+        Args:
+            employee_id: Идентификатор сотрудника.
+            data: Обновлённые данные (только переданные поля).
+            photo: Новый файл фотографии (опционально).
+
+        Returns:
+            EmployeeResponse: Обновлённый сотрудник.
+        """
         employee = await self._get_employee_or_404(employee_id)
 
         photo_filename = None
@@ -75,6 +120,14 @@ class EmployeeService:
         return EmployeeResponse.model_validate(employee)
 
     async def delete_employee(self, employee_id: int) -> dict:
+        """Удаляет сотрудника и его фотографию (если есть).
+
+        Args:
+            employee_id: Идентификатор сотрудника.
+
+        Returns:
+            dict: Сообщение об успешном удалении.
+        """
         employee = await self._get_employee_or_404(employee_id)
         if employee.photo_filename:
             delete_photo(employee.photo_filename)

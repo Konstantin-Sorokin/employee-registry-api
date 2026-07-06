@@ -24,6 +24,17 @@ class EmployeeBase(NameStripMixin):
     @field_validator("birth_date", mode="before")
     @classmethod
     def validate_birth_date(cls, v):
+        """Проверяет, что дата рождения не в будущем.
+
+        Args:
+            v: Значение даты рождения.
+
+        Returns:
+            date: Исходная дата, если валидация пройдена.
+
+        Raises:
+            ValueError: Если дата в будущем.
+        """
         if isinstance(v, date) and v > date.today():
             raise ValueError("Дата рождения не может быть в будущем")
         return v

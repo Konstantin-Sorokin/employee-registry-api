@@ -11,6 +11,20 @@ MAX_FILE_SIZE = 200 * 1024
 
 
 async def process_and_save_photo(photo: UploadFile) -> str:
+    """Обрабатывает и сохраняет загруженную фотографию.
+
+    Проверяет тип файла (только JPG/PNG) и размер (макс. 200 КБ).
+    Генерирует уникальное имя файла для предотвращения коллизий.
+
+    Args:
+        photo: Объект UploadFile с фотографией.
+
+    Returns:
+        str: Имя сохранённого файла.
+
+    Raises:
+        HTTPException: 400 при неподдерживаемом формате или превышении размера.
+    """
     if photo.content_type not in ALLOWED_CONTENT_TYPES:
         raise HTTPException(400, detail="Разрешены только изображения JPG или PNG")
 
@@ -40,7 +54,11 @@ async def process_and_save_photo(photo: UploadFile) -> str:
 
 
 def delete_photo(filename: str) -> None:
-    """Удаляет файл фото, если он существует."""
+    """Удаляет файл фотографии с диска, если он существует.
+
+    Args:
+        filename: Имя файла для удаления.
+    """
     file_path = UPLOAD_DIR / filename
     if file_path.exists():
         file_path.unlink()

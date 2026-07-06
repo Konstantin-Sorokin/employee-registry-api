@@ -3,6 +3,14 @@ from typing import Optional
 
 
 def get_age(birth_date: Optional[date]) -> int:
+    """Вычисляет возраст на основе даты рождения.
+
+    Args:
+        birth_date: Дата рождения или None.
+
+    Returns:
+        int: Возраст в годах. 0, если дата не указана.
+    """
     if not birth_date:
         return 0
     today = date.today()
@@ -13,6 +21,14 @@ def get_age(birth_date: Optional[date]) -> int:
 
 
 def format_phone_display(phone: Optional[str]) -> str:
+    """Форматирует номер телефона в читаемый вид: +7 (XXX) XXX-XX-XX.
+
+    Args:
+        phone: Строка с номером телефона или None.
+
+    Returns:
+        str: Отформатированный номер или '—' если номер пустой.
+    """
     if not phone:
         return "—"
     clean = "".join(c for c in phone if c.isdigit())
@@ -23,6 +39,14 @@ def format_phone_display(phone: Optional[str]) -> str:
 
 
 def api_photo_url(filename: Optional[str]) -> str:
+    """Формирует URL для доступа к фотографии сотрудника.
+
+    Args:
+        filename: Имя файла фотографии или None.
+
+    Returns:
+        str: URL-путь к фото или путь к заглушке, если файл не указан.
+    """
     if not filename:
         return "/static/placeholder.svg"
     return f"/uploads/photos/{filename}"
